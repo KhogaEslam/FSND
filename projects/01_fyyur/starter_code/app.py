@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------------#
 # Imports
 #----------------------------------------------------------------------------#
-import json
+import sys
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -9,9 +9,9 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
-from forms import *
 from flask_migrate import Migrate
+from forms import *
+from temp import *
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -31,16 +31,16 @@ class Venue(db.Model):
 
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String)
-  city = db.Column(db.String(120))
-  state = db.Column(db.String(120))
-  address = db.Column(db.String(120))
-  phone = db.Column(db.String(120))
-  image_link = db.Column(db.String(500))
-  facebook_link = db.Column(db.String(120))
-  website = db.Column(db.String(120))
+  city = db.Column(db.String)
+  state = db.Column(db.String)
+  address = db.Column(db.String)
+  phone = db.Column(db.String)
+  image_link = db.Column(db.String)
+  facebook_link = db.Column(db.String)
+  website = db.Column(db.String)
   seeking_talent = db.Column(db.Boolean, default=False)
-  seeking_description = db.Column(db.String(120))
-  genres = db.Column(db.String(120))
+  seeking_description = db.Column(db.String)
+  genres = db.Column(db.String)
 
   # each venu has many shows
   shows = db.relationship('Show', lazy=True, cascade=all_orphan, backref='venue')
@@ -64,15 +64,15 @@ class Artist(db.Model):
 
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String)
-  city = db.Column(db.String(120))
-  state = db.Column(db.String(120))
-  phone = db.Column(db.String(120))
-  genres = db.Column(db.String(120))
-  image_link = db.Column(db.String(500))
-  facebook_link = db.Column(db.String(120))
-  website = db.Column(db.String(120))
+  city = db.Column(db.String)
+  state = db.Column(db.String)
+  phone = db.Column(db.String)
+  genres = db.Column(db.String)
+  image_link = db.Column(db.String)
+  facebook_link = db.Column(db.String)
+  website = db.Column(db.String)
   seeking_venue = db.Column(db.Boolean, default=False)
-  seeking_description = db.Column(db.String(120))
+  seeking_description = db.Column(db.String)
   available_from = db.Column(db.DateTime, nullable=False)
   available_to = db.Column(db.DateTime, nullable=False)
 
@@ -87,11 +87,23 @@ class Album(db.Model):
   __tablename__ = 'albums'
 
   id = db.Column(db.Integer,primary_key=True)
-  title = db.Column(db.String(120),nullable=False)
-  songs = db.Column(db.String(500),nullable=False)
+  title = db.Column(db.String,nullable=False)
 
   # each album has one artist/band
   artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
+  # each album has many songs
+  songs = db.relationship('Song', lazy=True, cascade=all_orphan, backref='album')
+
+#----------------------------------------------------------------------------#
+
+class Song(db.Model):
+  __tablename__ = 'songs'
+
+  id = db.Column(db.Integer,primary_key=True)
+  name = db.Column(db.String,nullable=False)
+
+  # each song has one album
+  album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -111,6 +123,21 @@ app.jinja_env.filters['datetime'] = format_datetime
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
+
+# Feed DB with test data
+def insert_test_data():
+  if Artist.query.count() <= 0:
+    feed_artists()
+    feed_venus()
+    feed_albums()
+    feed_songs()
+    feed_shows()
+
+insert_test_data()
+
+#  ----------------------------------------------------------------
+
+# Home
 @app.route('/')
 def index():
   return render_template('pages/home.html')
@@ -353,3 +380,131 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
 '''
+
+#----------------------------------------------------------------------------#
+# Feeders.
+#----------------------------------------------------------------------------#
+def feed_artists():
+  try:
+    artists = []
+    data = []
+
+    for val in data:
+      artist = Artist(
+                name = val['name'],
+                city = val['city'],
+                state = val['state'],
+                phone = val['phone'],
+                genres = val['genres'],
+                image_link = val['image_link'],
+                facebook_link = val['facebook_link'],
+                website = val['website'],
+                seeking_venue = val['seeking_venue'],
+                seeking_description = val['seeking_description'],
+                available_from = val['available_from'],
+                available_to = val['available_to']
+              )
+
+      artists.append(artist)
+
+    db.session.insert(artists)
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    print(sys.exc_info)
+  finally:
+    db.session.close()
+
+def feed_venus():
+  try:
+    venues = []
+    data = []
+
+    for val in data:
+      venue = Venue(
+                name =  val['name'],
+                city =  val['city'],
+                state = val['state'],
+                address = val['address'],
+                phone = val['phone'],
+                image_link = val['image_link'],
+                facebook_link = val['facebook_link'],
+                website = val['website'],
+                seeking_talent = val['seeking_talent'],
+                seeking_description = val['seeking_description'],
+                genres = val['genres']
+              )
+
+      venues.append(venue)
+
+    db.session.insert(venues)
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    print(sys.exc_info)
+  finally:
+    db.session.close()
+
+def feed_albums():
+  try:
+    albums = []
+    data = []
+
+    for val in data:
+      album = Album(
+                title = val['title'],
+                artist_id = val['artist_id']
+              )
+
+      albums.append(album)
+
+    db.session.insert(albums)
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    print(sys.exc_info)
+  finally:
+    db.session.close()
+
+def feed_songs():
+  try:
+    songs = []
+    data = []
+
+    for val in data:
+      song = Song(
+              name = val['name'],
+              album_id = val['album_id']
+            )
+
+      songs.append(song)
+
+    db.session.insert(songs)
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    print(sys.exc_info)
+  finally:
+    db.session.close()
+
+def feed_shows():
+  try:
+    shows = []
+    data = []
+
+    for val in data:
+      show = Show(
+              start_time = val['start_time'],
+              artist_id = val['artist_id'],
+              venue_id = val['venue_id']
+            )
+
+      shows.append(show)
+
+    db.session.insert(shows)
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    print(sys.exc_info)
+  finally:
+    db.session.close()
