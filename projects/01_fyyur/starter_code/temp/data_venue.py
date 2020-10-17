@@ -2,7 +2,7 @@
 #  ----------------------------------------------------------------
 
 # /venues
-data = [{
+all = [{
     "city": "San Francisco",
     "state": "CA",
     "venues": [{
@@ -112,6 +112,8 @@ data3={
 "past_shows_count": 1,
 "upcoming_shows_count": 1,
 }
+
+data = [data1, data2, data3]
 
 # /venues/<venue_id>/edit
 venue={

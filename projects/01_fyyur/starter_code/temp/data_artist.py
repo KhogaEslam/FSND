@@ -2,7 +2,7 @@
 #  ----------------------------------------------------------------
 
 # /artists
-data=[{
+details=[{
   "id": 4,
   "name": "Guns N Petals",
 }, {
@@ -45,6 +45,8 @@ data1={
   "upcoming_shows": [],
   "past_shows_count": 1,
   "upcoming_shows_count": 0,
+  "available_from": "2035-04-02T20:00:00.000Z",
+  "available_to": "2035-06-01T20:00:00.000Z"
 }
 data2={
   "id": 5,
@@ -53,6 +55,7 @@ data2={
   "city": "New York",
   "state": "NY",
   "phone": "300-400-5000",
+  "website": "",
   "facebook_link": "https://www.facebook.com/mattquevedo923251523",
   "seeking_venue": False,
   "image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
@@ -65,6 +68,8 @@ data2={
   "upcoming_shows": [],
   "past_shows_count": 1,
   "upcoming_shows_count": 0,
+  "available_from": "2035-04-02T20:00:00.000Z",
+  "available_to": "2035-06-01T20:00:00.000Z"
 }
 data3={
   "id": 6,
@@ -94,7 +99,11 @@ data3={
   }],
   "past_shows_count": 0,
   "upcoming_shows_count": 3,
+  "available_from": "2035-04-02T20:00:00.000Z",
+  "available_to": "2035-06-01T20:00:00.000Z"
 }
+
+data = [data1, data2, data3]
 
 # /artists/<artist_id>/edit
 artist={

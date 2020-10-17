@@ -2,6 +2,7 @@
 # Imports
 #----------------------------------------------------------------------------#
 import sys
+import traceback
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -10,6 +11,15 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_migrate import Migrate
+from sqlalchemy.sql.elements import Null
+from sqlalchemy import func
+
+from temp.data_genre import data as data_genre
+from temp.data_artist import data as data_artist
+from temp.data_venue import data as data_venue
+from temp.data_album import data as data_album
+from temp.data_song import data as data_song
+from temp.data_show import data as data_show
 from forms import *
 from temp import *
 
@@ -26,6 +36,30 @@ all_orphan = "all, delete-orphan"
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+
+
+venue_genre = db.Table('venue_genre',
+    db.Column('venue_id', db.Integer, db.ForeignKey('venues.id'), primary_key=True),
+    db.Column('genre_id', db.Integer, db.ForeignKey('genres.id'), primary_key=True)
+)
+
+#----------------------------------------------------------------------------#
+
+artist_genre = db.Table('artist_genre',
+    db.Column('artist_id', db.Integer, db.ForeignKey('artists.id'), primary_key=True),
+    db.Column('genre_id', db.Integer, db.ForeignKey('genres.id'), primary_key=True)
+)
+
+#----------------------------------------------------------------------------#
+
+class Genre(db.Model):
+  __tablename__ = 'genres'
+
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String, unique=True)
+
+#----------------------------------------------------------------------------#
+
 class Venue(db.Model):
   __tablename__ = 'venues'
 
@@ -40,11 +74,12 @@ class Venue(db.Model):
   website = db.Column(db.String)
   seeking_talent = db.Column(db.Boolean, default=False)
   seeking_description = db.Column(db.String)
-  genres = db.Column(db.String)
 
   # each venu has many shows
   shows = db.relationship('Show', lazy=True, cascade=all_orphan, backref='venue')
-
+  # each venue has many genres
+  genres = db.relationship('Genre', secondary=venue_genre, lazy='subquery',
+        backref=db.backref('venue', lazy=True))
 #----------------------------------------------------------------------------#
 
 class Show(db.Model):
@@ -67,7 +102,6 @@ class Artist(db.Model):
   city = db.Column(db.String)
   state = db.Column(db.String)
   phone = db.Column(db.String)
-  genres = db.Column(db.String)
   image_link = db.Column(db.String)
   facebook_link = db.Column(db.String)
   website = db.Column(db.String)
@@ -80,6 +114,9 @@ class Artist(db.Model):
   shows = db.relationship('Show', lazy=True, cascade=all_orphan, backref='artist')
   # each artist has many albums
   albums = db.relationship('Album', lazy=True, cascade=all_orphan, backref='artist')
+  # each artist has many genres
+  genres = db.relationship('Genre', secondary=artist_genre, lazy='subquery',
+        backref=db.backref('artist', lazy=True))
 
 #----------------------------------------------------------------------------#
 
@@ -123,19 +160,6 @@ app.jinja_env.filters['datetime'] = format_datetime
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
-
-# Feed DB with test data
-def insert_test_data():
-  if Artist.query.count() <= 0:
-    feed_artists()
-    feed_venus()
-    feed_albums()
-    feed_songs()
-    feed_shows()
-
-insert_test_data()
-
-#  ----------------------------------------------------------------
 
 # Home
 @app.route('/')
@@ -384,127 +408,175 @@ if __name__ == '__main__':
 #----------------------------------------------------------------------------#
 # Feeders.
 #----------------------------------------------------------------------------#
+
+def feed_genres():
+  try:
+    data = data_genre.data
+
+    for val in data:
+      genre = Genre(
+                name = val.get('name', '')
+              )
+
+      db.session.add(genre)
+
+    db.session.commit()
+  except Exception:
+    db.session.rollback()
+    traceback.print_exc()
+  finally:
+    db.session.close()
+
+#----------------------------------------------------------------------------#
+
 def feed_artists():
   try:
-    artists = []
-    data = []
+    data = data_artist.data
 
     for val in data:
       artist = Artist(
-                name = val['name'],
-                city = val['city'],
-                state = val['state'],
-                phone = val['phone'],
-                genres = val['genres'],
-                image_link = val['image_link'],
-                facebook_link = val['facebook_link'],
-                website = val['website'],
-                seeking_venue = val['seeking_venue'],
-                seeking_description = val['seeking_description'],
-                available_from = val['available_from'],
-                available_to = val['available_to']
+                name = val.get('name', ''),
+                city = val.get('city', ''),
+                state = val.get('state', ''),
+                phone = val.get('phone', ''),
+                image_link = val.get('image_link', ''),
+                facebook_link = val.get('facebook_link', ''),
+                website = val.get('website', ''),
+                seeking_venue = val.get('seeking_venue', False),
+                seeking_description = val.get('seeking_description', ''),
+                available_from = val.get('available_from', ''),
+                available_to = val.get('available_to', '')
               )
 
-      artists.append(artist)
+      genres = val.get('genres')
+      for genre_name in genres:
+        genre = Genre.query.filter(func.lower(Genre.name).contains(func.lower(genre_name))).one()
+        artist.genres.append(genre)
 
-    db.session.insert(artists)
+      db.session.add(artist)
+
     db.session.commit()
   except Exception:
     db.session.rollback()
-    print(sys.exc_info)
+    traceback.print_exc()
   finally:
     db.session.close()
+
+#----------------------------------------------------------------------------#
 
 def feed_venus():
   try:
-    venues = []
-    data = []
+    data = data_venue.data
 
     for val in data:
       venue = Venue(
-                name =  val['name'],
-                city =  val['city'],
-                state = val['state'],
-                address = val['address'],
-                phone = val['phone'],
-                image_link = val['image_link'],
-                facebook_link = val['facebook_link'],
-                website = val['website'],
-                seeking_talent = val['seeking_talent'],
-                seeking_description = val['seeking_description'],
-                genres = val['genres']
+                name =  val.get('name', ''),
+                city =  val.get('city', ''),
+                state = val.get('state', ''),
+                address = val.get('address', ''),
+                phone = val.get('phone', ''),
+                image_link = val.get('image_link', ''),
+                facebook_link = val.get('facebook_link', ''),
+                website = val.get('website', ''),
+                seeking_talent = val.get('seeking_talent', False),
+                seeking_description = val.get('seeking_description', '')
               )
 
-      venues.append(venue)
+      genres = val.get('genres')
+      for genre_name in genres:
+        genre = Genre.query.filter(func.lower(Genre.name).contains(func.lower(genre_name))).one()
+        venue.genres.append(genre)
 
-    db.session.insert(venues)
+      db.session.add(venue)
+
     db.session.commit()
   except Exception:
     db.session.rollback()
-    print(sys.exc_info)
+    traceback.print_exc()
   finally:
     db.session.close()
+
+#----------------------------------------------------------------------------#
 
 def feed_albums():
   try:
-    albums = []
-    data = []
+    data = data_album.data
 
     for val in data:
       album = Album(
-                title = val['title'],
-                artist_id = val['artist_id']
+                title = val.get('title', Null),
+                artist_id = val.get('artist_id', Null)
               )
 
-      albums.append(album)
+      db.session.add(album)
 
-    db.session.insert(albums)
     db.session.commit()
   except Exception:
     db.session.rollback()
-    print(sys.exc_info)
+    traceback.print_exc()
   finally:
     db.session.close()
+
+#----------------------------------------------------------------------------#
 
 def feed_songs():
   try:
-    songs = []
-    data = []
+    data = data_song.data
 
     for val in data:
       song = Song(
-              name = val['name'],
-              album_id = val['album_id']
+              name = val.get('name', Null),
+              album_id = val.get('album_id', Null)
             )
 
-      songs.append(song)
+      db.session.add(song)
 
-    db.session.insert(songs)
     db.session.commit()
   except Exception:
     db.session.rollback()
-    print(sys.exc_info)
+    traceback.print_exc()
   finally:
     db.session.close()
+
+#----------------------------------------------------------------------------#
 
 def feed_shows():
   try:
-    shows = []
-    data = []
+    data = data_show.data
 
     for val in data:
       show = Show(
-              start_time = val['start_time'],
-              artist_id = val['artist_id'],
-              venue_id = val['venue_id']
+              start_time = val.get('start_time', Null),
+              artist_id = val.get('artist_id', Null),
+              venue_id = val.get('venue_id', Null)
             )
 
-      shows.append(show)
+      db.session.add(show)
 
-    db.session.insert(shows)
     db.session.commit()
   except Exception:
     db.session.rollback()
-    print(sys.exc_info)
+    traceback.print_exc()
   finally:
     db.session.close()
+
+
+# Feed DB with test data
+@app.route('/feed_db')
+def insert_test_data():
+  if Genre.query.count() <= 0:
+    feed_genres()
+  if Artist.query.count() <= 0:
+    feed_artists()
+  if Venue.query.count() <= 0:
+    feed_venus()
+  if Album.query.count() <= 0:
+    feed_albums()
+  if Song.query.count() <= 0:
+    feed_songs()
+  if Show.query.count() <= 0:
+    feed_shows()
+
+  return 'Done Inserting  Data!', 200
+
+#  ----------------------------------------------------------------
