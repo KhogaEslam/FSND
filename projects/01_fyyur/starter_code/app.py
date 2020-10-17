@@ -5,7 +5,7 @@
 import traceback
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -27,6 +27,7 @@ from temp import *
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
+
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
@@ -144,6 +145,7 @@ class Song(db.Model):
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
+
 def format_datetime(value, format='medium'):
   date = dateutil.parser.parse(value)
   new_format = format
@@ -161,8 +163,12 @@ app.jinja_env.filters['datetime'] = format_datetime
 #----------------------------------------------------------------------------#
 
 # Home
-@app.route('/')
-def index():
+#  ----------------------------------------------------------------
+#  ----------------------------------------------------------------
+
+# List all...
+#  ----------------------------------------------------------------
+def get_home_data():
   data = {}
 
   recent_10_venues = Venue.query.limit(10).all()
@@ -171,7 +177,12 @@ def index():
   data['venues'] = recent_10_venues
   data['artists'] = recent_10_artists
 
-  return render_template('pages/home.html', data=data)
+  return data
+
+@app.route('/')
+def index():
+
+  return render_template('pages/home.html', data=get_home_data())
 
 #  Venues
 #  ----------------------------------------------------------------
@@ -270,34 +281,41 @@ def create_venue_form():
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
 
-    form = VenueForm(request.form)
+  error = False
+  form = VenueForm(request.form)
 
-    if form.validate():
-        try:
-            venue = Venue(
-                      name=form.name.data,
-                      image_link=form.image_link.data,
-                      city=form.city.data,
-                      state=form.state.data,
-                      address=form.address.data,
-                      phone=form.phone.data,
-                      genres=form.genres.data,
-                      seeking_talent=form.seeking_talent.data,
-                      seeking_description=form.seeking_description.data,
-                      website=form.website.data,
-                      facebook_link=form.facebook_link.data
-            )
-            db.session.add(venue)
-            db.session.commit()
-            flash('Venue ' + venue.name + ' was successfully listed!')
-        except Exception:
-            db.session.rollback()
-            traceback.print_exc()
-            flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
-        finally:
-            db.session.close()
+  if form.validate_on_submit():
+      try:
+          venue = Venue(
+                    name=form.name.data,
+                    image_link=form.image_link.data,
+                    city=form.city.data,
+                    state=form.state.data,
+                    address=form.address.data,
+                    phone=form.phone.data,
+                    genres=form.genres.data,
+                    seeking_talent=form.seeking_talent.data,
+                    seeking_description=form.seeking_description.data,
+                    website=form.website.data,
+                    facebook_link=form.facebook_link.data
+          )
 
-    return render_template('pages/home.html')
+          db.session.add(venue)
+          db.session.commit()
+      except Exception:
+          db.session.rollback()
+          traceback.print_exc()
+      finally:
+          db.session.close()
+
+      if not error:
+        flash('Venue ' + form.name.data + ' was successfully listed!')
+      else:
+        flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+
+      return render_template('pages/home.html', data=get_home_data())
+
+  return render_template('forms/new_venue.html', form=form)
 
 #  Update...
 #  ----------------------------------------------------------------
@@ -318,12 +336,22 @@ def edit_venue_submission(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
-  # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+    error = False
 
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+    try:
+        venue = Venue.query.get(venue_id)
+        db.session.delete(venue)
+        db.session.commit()
+    except Exception as e:
+        error = e
+        db.session.rollback()
+    finally:
+        db.session.close()
+
+    if error:
+        server_error(error)
+    else:
+        return jsonify({ 'success': True })
 
 #  Artists
 #  ----------------------------------------------------------------
