@@ -164,7 +164,15 @@ app.jinja_env.filters['datetime'] = format_datetime
 # Home
 @app.route('/')
 def index():
-  return render_template('pages/home.html')
+  data = {}
+
+  recent_10_venues = Venue.query.limit(10).all()
+  recent_10_artists = Artist.query.limit(10).all()
+
+  data['venues'] = recent_10_venues
+  data['artists'] = recent_10_artists
+
+  return render_template('pages/home.html', data=data)
 
 
 #  Venues
@@ -175,8 +183,7 @@ def index():
 #  ----------------------------------------------------------------
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
+
   data=[]
   return render_template('pages/venues.html', areas=data)
 
