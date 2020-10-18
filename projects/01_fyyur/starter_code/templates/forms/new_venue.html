@@ -55,7 +55,7 @@
       </div>
       <div class="form-group">
           <label for="phone">Phone</label>
-          {{ form.phone(class_ = 'form-control', placeholder='xxx-xxx-xxxx', autofocus = true) }}
+          {{ form.phone(class_ = 'form-control', placeholder='+1 xxx-xxx-xxxx', autofocus = true) }}
           {% if form.phone.errors %}
             <ul class="errors">
               {% for error in form.phone.errors %}

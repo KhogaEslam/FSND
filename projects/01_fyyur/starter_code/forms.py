@@ -1,22 +1,40 @@
 from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, SubmitField, BooleanField, TextAreaField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms import (ValidationError,
+    StringField,
+    SelectField,
+    SelectMultipleField,
+    SubmitField,
+    BooleanField,
+    TextAreaField
+)
+from wtforms.fields.html5 import DateTimeLocalField
+from wtforms.validators import DataRequired, AnyOf, URL, Required, Length
+import phonenumbers
 
-class ShowForm(FlaskForm):
+class ParentForm(FlaskForm):
+    def validate_phone(form, field):
+        try:
+            input_number = phonenumbers.parse(field.data)
+            if not (phonenumbers.is_valid_number(input_number)):
+                raise ValidationError('Invalid phone number. [ex: +919876543210]')
+        except Exception:
+            raise ValidationError('Invalid phone number. [ex: +919876543210]')
+
+class ShowForm(ParentForm):
     artist_id = StringField(
         'artist_id'
     )
     venue_id = StringField(
         'venue_id'
     )
-    start_time = DateTimeField(
+    start_time = DateTimeLocalField(
         'start_time',
         validators=[DataRequired()],
-        default= datetime.today()
+        default = datetime.today()
     )
 
-class VenueForm(FlaskForm):
+class VenueForm(ParentForm):
     name = StringField(
         'name', validators=[DataRequired()]
     )
@@ -86,9 +104,10 @@ class VenueForm(FlaskForm):
         'phone'
     )
     image_link = StringField(
-        'image_link'
+        'image_link', validators=[URL()]
     )
-    genres = SelectMultipleField('genres', validators=[DataRequired()],
+    genres = SelectMultipleField('genres',
+        validators=[DataRequired()],
         coerce=int
     )
     facebook_link = StringField(
@@ -97,11 +116,11 @@ class VenueForm(FlaskForm):
     website = StringField(
         'website', validators=[URL()]
     )
-    seeking_talent = BooleanField('Seeking Talent?', id='seeking-talent')
-    seeking_description = TextAreaField('Seeking Talent Description', id='seeking-description')
+    seeking_talent = BooleanField('seeking_talent', id='seeking-talent')
+    seeking_description = TextAreaField('seeking_description', id='seeking-description')
     submit = SubmitField()
 
-class ArtistForm(FlaskForm):
+class ArtistForm(ParentForm):
     name = StringField(
         'name', validators=[DataRequired()]
     )
@@ -165,40 +184,28 @@ class ArtistForm(FlaskForm):
         ]
     )
     phone = StringField(
-        # TODO implement validation logic for state
         'phone'
     )
     image_link = StringField(
-        'image_link'
+        'image_link', validators=[URL()]
     )
-    genres = SelectMultipleField(
-        # TODO implement enum restriction
-        'genres', validators=[DataRequired()],
-        choices=[
-            ('Alternative', 'Alternative'),
-            ('Blues', 'Blues'),
-            ('Classical', 'Classical'),
-            ('Country', 'Country'),
-            ('Electronic', 'Electronic'),
-            ('Folk', 'Folk'),
-            ('Funk', 'Funk'),
-            ('Hip-Hop', 'Hip-Hop'),
-            ('Heavy Metal', 'Heavy Metal'),
-            ('Instrumental', 'Instrumental'),
-            ('Jazz', 'Jazz'),
-            ('Musical Theatre', 'Musical Theatre'),
-            ('Pop', 'Pop'),
-            ('Punk', 'Punk'),
-            ('R&B', 'R&B'),
-            ('Reggae', 'Reggae'),
-            ('Rock n Roll', 'Rock n Roll'),
-            ('Soul', 'Soul'),
-            ('Other', 'Other'),
-        ]
+    genres = SelectMultipleField('genres', validators=[DataRequired()],
+        coerce=int
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         'facebook_link', validators=[URL()]
     )
-
-# TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
+    website = StringField(
+        'website', validators=[URL()]
+    )
+    seeking_venue = BooleanField('seeking_venue', id='seeking-talent')
+    seeking_description = TextAreaField('seeking_description', id='seeking-description')
+    available_from = DateTimeLocalField('available_from',
+        validators=[Required()],
+        format='%Y-%m-%dT%H:%M'
+    )
+    available_to = DateTimeLocalField('available_to',
+        validators=[Required()],
+        format='%Y-%m-%dT%H:%M'
+    )
+    submit = SubmitField()

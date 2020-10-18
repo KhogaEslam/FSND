@@ -11,7 +11,7 @@
 		</p>
 		<div class="genres">
 			{% for genre in artist.genres %}
-			<span class="genre">{{ genre }}</span>
+			<span class="genre">{{ genre.name }}</span>
 			{% endfor %}
 		</div>
 		<p>
@@ -38,9 +38,25 @@
 			<i class="fas fa-moon"></i> Not currently seeking performance venues
 		</p>
 		{% endif %}
+		<h3>
+			<a href="/artists/{{ artist.id }}/edit"><button class="btn btn-default btn-lg">Edit</button></a>
+			<button class="btn btn-danger btn-lg" onclick="deleteArtist({{ artist.id }})">Delete!</button>
+		</h3>
 	</div>
 	<div class="col-sm-6">
 		<img src="{{ artist.image_link }}" alt="Venue Image" />
+	</div>
+	<div class="col-sm-6">
+		<h4>Available</h4>
+		<p>
+			From: 
+			<i class="fas fa-calendar"></i> {{ artist.available_from|datetime('full') }}
+		</p>
+		<p></p>
+		<p>
+			To:
+			<i class="fas fa-calendar"></i> {{ artist.available_to|datetime('full') }}
+		</p>
 	</div>
 </div>
 <section>

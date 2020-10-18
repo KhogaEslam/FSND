@@ -7,24 +7,40 @@ const deleteVenue = (venueId) => {
   fetch('/venues/' + venueId, {
     method: 'DELETE'
   })
-  .then(response => response.json())
+  .then(response => {
+    return response.json()
+  })
   .then(jsonResponse => {
-    if(jsonResponse['success'] == null) {
-      console.log(jsonResponse)
+    if (jsonResponse['success'] == null) {
       alert('Error!')
     } else {
       location.replace("/")
     }
   })
   .catch(function(e) {
-    console.log(e)
+    alert('Error!')
+  })
+};
+
+const deleteArtist = (venueId) => {
+  fetch('/artists/' + venueId, {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(jsonResponse => {
+    if(jsonResponse['success'] == null) {
+      alert('Error!')
+    } else {
+      location.replace("/")
+    }
+  })
+  .catch(function(e) {
     alert('Error!')
   })
 };
 
 jQuery(document).ready(function() {
   if ($("#seeking-talent")[0] && $("#seeking-talent")[0].checked) {
-    console.log('HERE');
     $('#seeking-description-section').show();
   }
 
