@@ -670,11 +670,15 @@ def delete_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/shows')
 def shows():
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[]
-  return render_template('pages/shows.html', shows=data)
+  shows = Show.query.order_by(Show.start_time).all()
+
+  for show in shows:
+      show.venue_name = show.venue.name
+      show.artist_name = show.artist.name
+      show.artist_image_link = show.artist.image_link
+      show.start_time = show.start_time.strftime('%Y-%m-%dT%I:%M:%S.%sZ')
+
+  return render_template('pages/shows.html', shows=shows)
 
 #  Create...
 #  ----------------------------------------------------------------
@@ -686,15 +690,55 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-  # called to create new shows in the db, upon submitting new show listing form
-  # TODO: insert form data as a new Show record in the db, instead
 
-  # on successful db insert, flash success
-  flash('Show was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Show could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+  error = False
+  form = ShowForm(request.form)
+
+  if form.validate_on_submit():
+    artist = Artist.query.get(form.artist_id.data)
+    venue = Venue.query.get(form.venue_id.data)
+
+    if not artist:
+        flash('Artist not found')
+        error = True
+    else:
+        if artist.available_from and artist.available_to:
+            if form.start_time.data > artist.available_to or form.start_time.data < artist.available_from:
+                error = True
+                flash('Artist not available at this time, check his availability!')
+
+    if not venue:
+        flash('Venue not found!')
+        error = True
+
+    try:
+        show = Show(
+          start_time=form.start_time.data,
+          artist_id=form.artist_id.data,
+          venue_id=form.venue_id.data
+        )
+
+        db.session.add(show)
+        db.session.commit()
+
+    except Exception as e:
+      error = e
+      db.session.rollback()
+      traceback.print_exc()
+    finally:
+      db.session.close()
+
+    if not error:
+      flash('Show was successfully listed!')
+    else:
+      flash('An error occurred. Show could not be listed.')
+
+    return render_template('pages/home.html', data=get_home_data())
+
+  else:
+    log_form_errors(form.errors.items())
+
+  return render_template('forms/new_show.html', form=form)
 
 #  Errors
 #  ----------------------------------------------------------------

@@ -31,7 +31,8 @@ class ShowForm(ParentForm):
     start_time = DateTimeLocalField(
         'start_time',
         validators=[DataRequired()],
-        default = datetime.today()
+        default = datetime.today(),
+        format='%Y-%m-%dT%H:%M'
     )
 
 class VenueForm(ParentForm):
