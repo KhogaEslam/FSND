@@ -21,3 +21,18 @@ const deleteVenue = (venueId) => {
     alert('Error!')
   })
 };
+
+jQuery(document).ready(function() {
+  if ($("#seeking-talent")[0] && $("#seeking-talent")[0].checked) {
+    console.log('HERE');
+    $('#seeking-description-section').show();
+  }
+
+  $("#seeking-talent").change(function() {
+      if (this.checked) {
+          $('#seeking-description-section').show();
+      } else {
+          $('#seeking-description-section').hide();
+      }
+  });
+});

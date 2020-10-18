@@ -26,4 +26,28 @@ data=[{
     "name": "Hip-Hop"
   }, {
     "name": "Rock n Roll"
+  }, {
+    "name": "Alternative"
+  }, {
+    "name": "Blues"
+  }, {
+    "name": "Country"
+  }, {
+    "name": "Electronic"
+  }, {
+    "name": "Funk"
+  }, {
+    "name": "Heavy Metal"
+  }, {
+    "name": "Instrumental"
+  }, {
+    "name": "Musical Theatre"
+  }, {
+    "name": "Pop"
+  }, {
+    "name": "Punk"
+  }, {
+    "name": "Soul"
+  }, {
+    "name": "Other"
   }]
