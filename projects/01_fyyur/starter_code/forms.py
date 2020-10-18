@@ -210,3 +210,14 @@ class ArtistForm(ParentForm):
         format='%Y-%m-%dT%H:%M'
     )
     submit = SubmitField()
+
+class AlbumForm(ParentForm):
+    artist = None
+    title = StringField(
+        'title',
+        validators=[DataRequired()]
+    )
+    songs = StringField(
+        'songs',
+        validators=[DataRequired()]
+    )

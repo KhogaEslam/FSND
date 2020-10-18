@@ -662,6 +662,55 @@ def delete_artist(artist_id):
   else:
     return jsonify({ 'success': True })
 
+#  Albums
+#  ----------------------------------------------------------------
+#  ----------------------------------------------------------------
+
+#  Create...
+#  ----------------------------------------------------------------
+@app.route('/artists/<artist_id>/add_album', methods=['GET'])
+def create_album_form(artist_id):
+
+  form = AlbumForm()
+  form.artist = Artist.query.get(artist_id)
+  return render_template('forms/new_album.html', form=form)
+
+@app.route('/artists/<artist_id>/add_album', methods=['POST'])
+def create_album_submission(artist_id):
+  form = AlbumForm(request.form)
+  error = False
+
+  if form.validate():
+    try:
+      album = Album(
+        artist_id=artist_id,
+        title=form.title.data
+      )
+      if form.songs.data:
+        for song_name in form.songs.data.split(','):
+          album.songs.append(Song(name=song_name))
+
+      db.session.add(album)
+      db.session.commit()
+
+    except Exception as e:
+      error = e
+      db.session.rollback()
+      traceback.print_exc()
+    finally:
+      db.session.close()
+
+    if not error:
+      flash('Album was ' + form.title.data + ' successfully listed!')
+      return redirect(url_for('show_artist', artist_id=artist_id))
+    else:
+      flash('An error occurred. Album could not be listed.')
+
+  else:
+    log_form_errors(form.errors.items())
+
+  return render_template('forms/new_album.html', form=form)
+
 #  Shows
 #  ----------------------------------------------------------------
 #  ----------------------------------------------------------------

@@ -88,5 +88,28 @@
 	</div>
 </section>
 
+<section>
+	{% if artist.albums|length > 0 %}
+		<h2 class="monospace">Artist has {{ artist.albums|length }} {% if artist.albums|length == 1 %}Album{% else %}Albums{% endif %}</h2>
+		<div class="row">
+			{% for album in artist.albums %}
+			<div class="col-sm-4">
+				<div class="tile">
+					{{ album.title }}
+					<ul>
+						{% for song in album.songs %}
+							<li>{{ song.name }}</li>
+						{% endfor %}
+					</ul>
+				</div>
+			</div>
+			{% endfor %}
+		</div>
+	{% endif %}
+	<div>
+		<a href="/artists/{{artist.id}}/add_album"><button class="btn btn-primary btn-lg">Add Album</button></a>
+	</div>
+</section>
+
 {% endblock %}
 
