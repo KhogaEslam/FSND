@@ -29,14 +29,16 @@ class Question(db.Model):
   id = Column(Integer, primary_key=True)
   question = Column(String)
   answer = Column(String)
-  category = Column(String)
+  category = Column(Integer)
   difficulty = Column(Integer)
+  # category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
 
   def __init__(self, question, answer, category, difficulty):
     self.question = question
     self.answer = answer
     self.category = category
     self.difficulty = difficulty
+    # self.category_id = category.id
 
   def insert(self):
     db.session.add(self)
@@ -67,6 +69,7 @@ class Category(db.Model):
 
   id = Column(Integer, primary_key=True)
   type = Column(String)
+  # questions = db.relationship("Question", backref="questions")
 
   def __init__(self, type):
     self.type = type
