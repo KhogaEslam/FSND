@@ -62,6 +62,42 @@ def create_app(test_config=None):
 
     # Routes...
 
+    '''
+    GET '/categories'
+    - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
+    - Request Arguments: None
+    - Returns: An object with categories, that each contains an object of category id and category type, total number of categories and success boolean, as the follwoing sample:
+    {
+        "categories": {
+            {
+                "id": 1,
+                "type": "Science"
+            },
+            {
+                "id": 2,
+                "type": "Art"
+            },
+            {
+                "id": 3,
+                "type": "Geography"
+            },
+            {
+                "id": 4,
+                "type": "History"
+            },
+            {
+                "id": 5,
+                "type": "Entertainment"
+            },
+            {
+                "id": 6,
+                "type": "Sports"
+            }
+        },
+        "total_categories": 6,
+        "success": true
+    }
+    '''
     @app.route('/api/categories')
     def retrieve_categories():
         try:
@@ -81,6 +117,40 @@ def create_app(test_config=None):
         except Exception:
             abort(500)
 
+    '''
+    GET '/questions'
+    - Fetches a dictionary of questions in which the keys are the ids and the values is the corresponding string of the question, string of the answer,
+      integer of category and integer of difficulty
+    - Request Arguments: None
+    - Returns: An object with questions, that each contains an object of question id, question category id, question difficulty, question answer, and question text.
+      total number of questions and success boolean, as the follwoing sample:
+    {
+        "questions": [
+            {
+                "answer": "answer1",
+                "category": 1,
+                "difficulty": 1,
+                "id": 1,
+                "question": "question1"
+            },
+            {
+                "answer": "answer2",
+                "category": 4,
+                "difficulty": 1,
+                "id": 2,
+                "question": "question2"
+            },            {
+                "answer": "answer3",
+                "category": 3,
+                "difficulty": 5,
+                "id": 3,
+                "question": "question3"
+            }
+        ],
+        "total_questions": 3,
+        "success": true
+    }
+    '''
     @app.route('/api/questions')
     def retrieve_questions():
         try:
@@ -102,6 +172,34 @@ def create_app(test_config=None):
         except Exception:
             abort(500)
 
+    '''
+    DELETE '/questions/<int:question_id>'
+    - Delete a question item in which the key is the id of the question to be deleted.
+    - Request Arguments: int:question_id
+    - Returns: The deleted question id, An object with questions, that each contains an object of question id, question category id, question difficulty, question answer, and question text.
+      total number of questions and success boolean, as the follwoing sample:
+    {
+        "deleted": 3,
+        "questions": [
+            {
+                "answer": "answer1",
+                "category": 1,
+                "difficulty": 1,
+                "id": 1,
+                "question": "question1"
+            },
+            {
+                "answer": "answer2",
+                "category": 4,
+                "difficulty": 1,
+                "id": 2,
+                "question": "question2"
+            }
+        ],
+        "total_questions": 2,
+        "success": true
+    }
+    '''
     @app.route('/api/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
@@ -129,6 +227,40 @@ def create_app(test_config=None):
         except Exception:
             abort(422)
 
+    '''
+    POST '/questions'
+    - Fetches a dictionary of questions in which the keys are the ids and the values is the corresponding string of the question, string of the answer, integer of category and integer of difficulty
+    - Request Arguments: An object with a key, question, answer, category, difficulty, that contains a object of question: question_string key:value pairs, answer: answer_string key:value pairs, category: category_id key:value pairs, difficulty: difficulty_id key:value pairs.  
+    - Returns: An object with questions, that each contains an object of question id, question category id, question difficulty, question answer, and question text.
+      total number of questions and success boolean, as the follwoing sample:
+    {
+        "questions": [
+            {
+                "answer": "answer1",
+                "category": 1,
+                "difficulty": 1,
+                "id": 1,
+                "question": "question1"
+            },
+            {
+                "answer": "answer2",
+                "category": 4,
+                "difficulty": 1,
+                "id": 2,
+                "question": "question2"
+            },
+            {
+                "answer": "answer4",
+                "category": 4,
+                "difficulty": 1,
+                "id": 4,
+                "question": "question4"
+            }
+        ],
+        "total_questions": 3,
+        "success": true
+    }
+    '''
     @app.route('/api/questions', methods=['POST'])
     def create_question():
         data = request.get_json()
@@ -157,6 +289,39 @@ def create_app(test_config=None):
         except Exception:
             abort(422)
 
+    '''
+    POST '/questions/search'
+    - Fetches a dictionary of questions in which the keys are the ids and the values is the corresponding string of the question search term and listing the current category of this questions listed.
+    - Request Arguments: An object with a key, question that contains a object of question: question_string key:value pairs.  
+    - Returns: 
+        Current category of fetched results with id and type values,
+        An object with questions of that category, that each contains an object of question id, question category id, question difficulty, question answer, and question text.
+        total number of questions and success boolean, as the follwoing sample:
+    {
+        "current_category": {
+            "id": 1,
+            "type": "Science"
+        },
+        "questions": [
+            {
+                "answer": "answer2",
+                "category": 1,
+                "difficulty": 1,
+                "id": 2,
+                "question": "question2"
+            },
+            {
+                "answer": "answer4",
+                "category": 1,
+                "difficulty": 1,
+                "id": 4,
+                "question": "question4"
+            }
+        ],
+        "total_questions": 2,
+        "success": true
+    }
+    '''
     @app.route('/api/questions/search', methods=['POST'])
     def search_questions():
         total_questions = 0
@@ -197,6 +362,39 @@ def create_app(test_config=None):
 
         return jsonify()
 
+    '''
+    GET '/categories/<int:category_id>/questions'
+    - Fetches a dictionary of questions based on category, only questions of that category to be shown.
+    - Request Arguments: An object with a key, category that contains id of the category of the questions to liest: category_id key:value pairs.  
+    - Returns: 
+        Current category slected with id and type values,
+        An object with questions of that category, that each contains an object of question id, question category id, question difficulty, question answer, and question text.
+        total number of questions and success boolean, as the follwoing sample:
+    {
+        "current_category": {
+            "id": 1,
+            "type": "Science"
+        },
+        "questions": [
+            {
+                "answer": "answer1",
+                "category": 1,
+                "difficulty": 1,
+                "id": 2,
+                "question": "question1"
+            },
+            {
+                "answer": "answer3",
+                "category": 1,
+                "difficulty": 1,
+                "id": 4,
+                "question": "question3"
+            }
+        ],
+        "success": true,
+        "total_questions": 2
+    }
+    '''
     @app.route('/api/categories/<int:category_id>/questions')
     def get_category_questions(category_id):
         try:
@@ -224,15 +422,33 @@ def create_app(test_config=None):
         except Exception:
             abort(500)
 
+    '''
+    POST '/quizzes'
+    - Fetches a dictionary of questions based on take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions.
+    - Request Arguments: An object with a key, category that contains id of the category of the questions to list: category_id key:value pairs and previous question parameter that contains key of the previous_question of the questions to list: previous_question_string key:value pairs.
+    - Returns: 
+        Previously selected questions,
+        Randomly selected question of the selected category that contains question id, question category id, question difficulty, question answer, and question text.
+        a boolean if question found and success boolean, as the follwoing sample:
+    {
+        "previousQuestions": [1, 4],
+        "question": {
+                "answer": "answer3",
+                "category": 1,
+                "difficulty": 1,
+                "id": 4,
+                "question": "question3"
+        },
+        "foundQuestion": true,
+        "success": true
+    }
+    '''
     @app.route("/api/quizzes", methods=["POST"])
     def play():
         try:
             req = request.get_json()
             previous_questions = req.get('previous_questions', None)
             quiz_category = req.get('quiz_category', None)
-
-            print(previous_questions)
-            print(quiz_category)
 
             category = Category.query.get(quiz_category.get('id', 0))
 
@@ -263,6 +479,11 @@ def create_app(test_config=None):
 
         except Exception:
             abort(500)
+
+
+# -------------------------------------------------------------------------------------
+
+    # Error Handlers...
 
     @app.errorhandler(400)
     def bad_request(error):
@@ -311,5 +532,10 @@ def create_app(test_config=None):
             "error": 503,
             "message": "Service Unavailable"
         }), 503
+
+
+# -------------------------------------------------------------------------------------
+
+    # App...
 
     return app
