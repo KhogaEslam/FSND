@@ -89,12 +89,12 @@ def create_app(test_config=None):
 
             total_questions = len(all_questions)
 
-            if total_questions == 0:
-                abort(404)
+            # if total_questions == 0:
+            #     abort(404)
 
             res_body = {}
 
-            res_body['categories'] = [cat.type for cat in categories]
+            res_body['categories'] = [category.type for category in categories]
             res_body['questions'] = current_questions
             res_body['total_questions'] = total_questions
             res_body['success'] = True
@@ -104,4 +104,35 @@ def create_app(test_config=None):
         except Exception as e:
             traceback.print_exc()
             abort(500)
+
+    @app.route('/api/questions/<int:question_id>', methods=['DELETE'])
+    def delete_question(question_id):
+        try:
+            question = Question.query.get(question_id)
+
+            if question is None:
+                abort(404)
+
+            question.delete()
+
+            all_questions = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, all_questions)
+
+            total_questions = len(all_questions)
+
+            # if total_questions == 0:
+            #     abort(404)
+
+            res_body = {}
+
+            res_body['questions'] = current_questions
+            res_body['total_questions'] = total_questions
+            res_body['deleted'] = question_id
+            res_body['success'] = True
+
+            return jsonify(res_body)
+
+        except Exception:
+            abort(422)
+
     return app
