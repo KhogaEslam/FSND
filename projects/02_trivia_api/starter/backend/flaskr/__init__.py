@@ -90,7 +90,7 @@ def create_app(test_config=None):
 
             res_body = {}
 
-            res_body['categories'] = [category.type for category in categories]
+            res_body['categories'] = [category.format() for category in categories]
             res_body['questions'] = paginated_questions
             res_body['total_questions'] = total_questions
             res_body['success'] = True
@@ -192,5 +192,33 @@ def create_app(test_config=None):
         res_body['current_category'] = None
 
         return jsonify()
+
+    @app.route('/api/categories/<int:category_id>/questions')
+    def get_category_questions(category_id):
+        try:
+            category = Category.query.get(category_id)
+
+            if not category:
+                abort(404)
+
+            try:
+                all_category_questions = Question.query.filter_by(category=category.id).order_by('id').all()
+                paginated_category_questions = paginate_questions(request, all_category_questions)
+
+                total_category_questions = len(all_category_questions)
+
+                res_body = {}
+                res_body['questions'] = paginated_category_questions
+                res_body['total_questions'] = total_category_questions
+                res_body['success'] = True
+                res_body['current_category'] = category.format()
+
+                return jsonify(res_body)
+
+            except Exception:
+                abort(422)
+        except Exception:
+            abort(500)
+
 
     return app
