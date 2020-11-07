@@ -1,9 +1,11 @@
 # ------------------------------------- Imports ------------------------------------------------
 
 import traceback
+import random
 
 from flask import Flask, request, abort, jsonify
 from flask_cors import CORS
+from werkzeug.exceptions import ServiceUnavailable
 from models import setup_db, Question, Category
 
 # ------------------------------------- Constants ------------------------------------------------
@@ -157,6 +159,8 @@ def create_app(test_config=None):
 
     @app.route('/api/questions/search', methods=['POST'])
     def search_questions():
+        total_questions = 0
+
         try:
             data = request.get_json()
             search_term = data.get('searchTerm', '')
@@ -220,5 +224,44 @@ def create_app(test_config=None):
         except Exception:
             abort(500)
 
+    @app.route("/api/quizzes", methods=["POST"])
+    def play():
+        try:
+            req = request.get_json()
+            previous_questions = req.get('previous_questions', None)
+            quiz_category = req.get('quiz_category', None)
+
+            print(previous_questions)
+            print(quiz_category)
+
+            category = Category.query.get(quiz_category.get('id', 0))
+
+            if not category:
+                category = random.choice(Category.query.all())
+
+            try:
+                all_category_questions = Question.query.filter(Question.id.notin_(previous_questions)).filter_by(category=category.id).order_by('id').all()
+                paginated_category_questions = paginate_questions(request, all_category_questions)
+
+                found_question = True
+                question = None
+
+                if len(paginated_category_questions) == 0:
+                    found_question = False
+                else:
+                    question = random.choice(paginated_category_questions)
+
+                return jsonify({
+                    'success': True,
+                    'question': question,
+                    'previousQuestions': previous_questions,
+                    'foundQuestion': found_question
+                })
+
+            except Exception:
+                abort(422)
+
+        except Exception:
+            abort(500)
 
     return app

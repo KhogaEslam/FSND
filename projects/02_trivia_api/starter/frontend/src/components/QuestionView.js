@@ -91,8 +91,8 @@ class QuestionView extends Component {
       crossDomain: true,
       success: (result) => {
         this.setState({
-          questions: result.questions,
-          totalQuestions: result.total_questions,
+          questions: result.questions ? result.questions : [],
+          totalQuestions: result.total_questions ? result.total_questions : 0,
           currentCategory: result.current_category,
         });
         return;
@@ -124,7 +124,7 @@ class QuestionView extends Component {
 
   getCategory = (categoryID) => {
     return this.state.categories.filter(category => {
-      return category.id == categoryID
+      return category.id === categoryID
     })[0].type
   }
 

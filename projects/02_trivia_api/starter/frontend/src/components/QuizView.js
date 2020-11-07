@@ -13,7 +13,7 @@ class QuizView extends Component {
         quizCategory: null,
         previousQuestions: [], 
         showAnswer: false,
-        categories: {},
+        categories: [],
         numCorrect: 0,
         currentQuestion: {},
         guess: '',
@@ -26,7 +26,7 @@ class QuizView extends Component {
       url: `${constConfigObject.BASE_URL}/categories`,
       type: "GET",
       success: (result) => {
-        this.setState(result.categories)
+        this.setState({'categories': result.categories})
         return;
       },
       error: (error) => {
@@ -36,7 +36,7 @@ class QuizView extends Component {
     })
   }
 
-  selectCategory = ({type, id=0}) => {
+  selectCategory = ({type=null, id=0}) => {
     this.setState({quizCategory: {type, id}}, this.getNextQuestion)
   }
 
@@ -46,7 +46,7 @@ class QuizView extends Component {
 
   getNextQuestion = () => {
     const previousQuestions = [...this.state.previousQuestions]
-    if(this.state.currentQuestion.id) { previousQuestions.push(this.state.currentQuestion.id) }
+    if (this.state.currentQuestion.id) { previousQuestions.push(this.state.currentQuestion.id) }
 
     $.ajax({
       url: `${constConfigObject.BASE_URL}/quizzes`,
@@ -62,13 +62,19 @@ class QuizView extends Component {
       },
       crossDomain: true,
       success: (result) => {
-        this.setState({
-          showAnswer: false,
-          previousQuestions: previousQuestions,
-          currentQuestion: result.question,
-          guess: '',
-          forceEnd: result.question ? false : true
-        })
+        console.log(result)
+        if (result.foundQuestion && result.foundQuestion == true) {
+          this.setState({
+            showAnswer: false,
+            previousQuestions: previousQuestions,
+            currentQuestion: result.question,
+            guess: '',
+            forceEnd: result.question ? false : true
+          })
+          return;
+        }
+
+        alert('Unable to load more questions from this category!')
         return;
       },
       error: (error) => {
@@ -106,14 +112,14 @@ class QuizView extends Component {
               <div className="choose-header">Choose Category</div>
               <div className="category-holder">
                   <div className="play-category" onClick={this.selectCategory}>ALL</div>
-                  {Object.keys(this.state.categories).map(id => {
+                  {this.state.categories.map(category => {
                   return (
                     <div
-                      key={id}
-                      value={id}
+                      key={category.id}
+                      value={category.id}
                       className="play-category"
-                      onClick={() => this.selectCategory({type:this.state.categories[id], id})}>
-                      {this.state.categories[id]}
+                      onClick={() => this.selectCategory({type: category.type, id: category.id})}>
+                      {category.type}
                     </div>
                   )
                 })}
