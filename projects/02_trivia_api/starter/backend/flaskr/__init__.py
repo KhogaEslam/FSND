@@ -27,6 +27,8 @@ def create_app(test_config=None):
                              'Content-Type, Authorization')
         response.headers.add('Access-Control-Allow-Methods',
                              'GET, PUT, PATCH, POST, DELETE, OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials',
+                             'true')
         return response
 
 # -------------------------------------------------------------------------------------
@@ -39,9 +41,9 @@ def create_app(test_config=None):
         end = start + CATEGORIES_PER_PAGE
 
         categories = [category.format() for category in all_categories]
-        current_categories = categories[start:end]
+        paginated_categories = categories[start:end]
 
-        return current_categories
+        return paginated_categories
 
     def paginate_questions(request, all_questions):
         page = request.args.get('page', 1, type=int)
@@ -49,9 +51,9 @@ def create_app(test_config=None):
         end = start + QUESTIONS_PER_PAGE
 
         questions = [question.format() for question in all_questions]
-        current_questions = questions[start:end]
+        paginated_questions = questions[start:end]
 
-        return current_questions
+        return paginated_questions
 
 
 # -------------------------------------------------------------------------------------
@@ -62,16 +64,13 @@ def create_app(test_config=None):
     def retrieve_categories():
         try:
             all_categories = Category.query.order_by(Category.id).all()
-            current_categories = paginate_categories(request, all_categories)
+            paginated_categories = paginate_categories(request, all_categories)
 
             total_categories = len(all_categories)
 
-            if total_categories == 0:
-                abort(404)
-
             res_body = {}
 
-            res_body['categories'] = current_categories
+            res_body['categories'] = paginated_categories
             res_body['total_categories'] = total_categories
             res_body['success'] = True
 
@@ -84,18 +83,15 @@ def create_app(test_config=None):
     def retrieve_questions():
         try:
             all_questions = Question.query.order_by(Question.id).all()
-            current_questions = paginate_questions(request, all_questions)
+            paginated_questions = paginate_questions(request, all_questions)
             categories = Category.query.all()
 
             total_questions = len(all_questions)
 
-            # if total_questions == 0:
-            #     abort(404)
-
             res_body = {}
 
             res_body['categories'] = [category.type for category in categories]
-            res_body['questions'] = current_questions
+            res_body['questions'] = paginated_questions
             res_body['total_questions'] = total_questions
             res_body['success'] = True
 
@@ -116,18 +112,43 @@ def create_app(test_config=None):
             question.delete()
 
             all_questions = Question.query.order_by(Question.id).all()
-            current_questions = paginate_questions(request, all_questions)
+            paginated_questions = paginate_questions(request, all_questions)
 
             total_questions = len(all_questions)
 
-            # if total_questions == 0:
-            #     abort(404)
+            res_body = {}
+
+            res_body['questions'] = paginated_questions
+            res_body['total_questions'] = total_questions
+            res_body['deleted'] = question_id
+            res_body['success'] = True
+
+            return jsonify(res_body)
+
+        except Exception:
+            abort(422)
+
+    @app.route('/api/questions', methods=['POST'])
+    def create_question():
+        data = request.get_json()
+        question = data.get('question', None)
+        answer = data.get('answer', None)
+        category = data.get('category', None)
+        difficulty = data.get('difficulty', None)
+
+        try:
+            questions = Question(question=question, answer=answer, category=category, difficulty=difficulty)
+            questions.insert()
+
+            all_questions = Question.query.order_by(Question.id).all()
+            paginated_questions = paginate_questions(request, all_questions)
+
+            total_questions = len(all_questions)
 
             res_body = {}
 
-            res_body['questions'] = current_questions
+            res_body['questions'] = paginated_questions
             res_body['total_questions'] = total_questions
-            res_body['deleted'] = question_id
             res_body['success'] = True
 
             return jsonify(res_body)
