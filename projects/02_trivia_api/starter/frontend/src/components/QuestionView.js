@@ -80,7 +80,7 @@ class QuestionView extends Component {
 
   submitSearch = (searchTerm) => {
     $.ajax({
-      url: `${constConfigObject.BASE_URL}/questions`,
+      url: `${constConfigObject.BASE_URL}/questions/search`,
       type: "POST",
       dataType: "json",
       contentType: "application/json",

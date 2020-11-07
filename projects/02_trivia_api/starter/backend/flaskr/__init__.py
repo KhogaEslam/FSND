@@ -97,8 +97,7 @@ def create_app(test_config=None):
 
             return jsonify(res_body)
 
-        except Exception as e:
-            traceback.print_exc()
+        except Exception:
             abort(500)
 
     @app.route('/api/questions/<int:question_id>', methods=['DELETE'])
@@ -155,5 +154,43 @@ def create_app(test_config=None):
 
         except Exception:
             abort(422)
+
+    @app.route('/api/questions/search', methods=['POST'])
+    def search_questions():
+        try:
+            data = request.get_json()
+            search_term = data.get('searchTerm', '')
+
+            search_result = Question.query.filter(Question.question.ilike('%{}%'.format(search_term))).order_by('id').all()
+            paginated_questions = paginate_questions(request, search_result)
+
+            res_body = {}
+            total_questions = len(search_result)
+
+            for question in search_result:
+                try:
+                    questions_categories = Category.query.filter_by(id=question.category).order_by('id').all()
+                    current_categories = paginate_categories(request, questions_categories)
+
+                    for category in current_categories:
+                        res_body['questions'] = paginated_questions
+                        res_body['total_questions'] = total_questions
+                        res_body['success'] = True
+                        res_body['current_category'] = category
+
+                        return jsonify(res_body)
+
+                except Exception:
+                    abort(422)
+
+        except Exception:
+            abort(422)
+
+        res_body['questions'] = paginated_questions
+        res_body['total_questions'] = total_questions
+        res_body['success'] = True
+        res_body['current_category'] = None
+
+        return jsonify()
 
     return app
