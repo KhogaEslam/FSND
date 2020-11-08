@@ -36,24 +36,6 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    def test_get_paginated_questions(self):
-        res = self.client().get('/api/questions')
-        data = json.loads(res.data)
-
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertTrue(data['total_questions'])
-        self.assertTrue(len(data['questions']))
-
-    def test_0_returned_requesting_beyond_valid_page(self):
-        res = self.client().get('/api/questions?page=1000')
-        data = json.loads(res.data)
-
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertEqual(data['questions'], [])
-        self.assertEqual(data['total_questions'], 19)
-
     def test_get_paginated_categories(self):
         res = self.client().get('/api/categories')
         data = json.loads(res.data)
@@ -63,13 +45,40 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_categories'])
         self.assertTrue(len(data['categories']))
 
-    def test_delete_question(self):
-        res = self.client().delete('/api/questions/10')
+    def test_0_returned_requesting_categories_beyond_valid_page(self):
+        res = self.client().get('/api/categories?page=1000')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['success'], True)
+        self.assertEqual(data['categories'], [])
+        self.assertTrue(data['total_categories'])
+
+    def test_get_paginated_questions(self):
+        res = self.client().get('/api/questions')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['deleted'], 10)
+        self.assertTrue(data['total_questions'])
+        self.assertTrue(len(data['questions']))
+
+    def test_0_returned_requesting_questions_beyond_valid_page(self):
+        res = self.client().get('/api/questions?page=1000')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['questions'], [])
+        self.assertTrue(data['total_questions'])
+
+    def test_delete_question(self):
+        res = self.client().delete('/api/questions/5')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['deleted'], 5)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
 
@@ -88,7 +97,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
-        self.assertEqual(len(data['questions']), 10)
+        self.assertTrue(len(data['questions']))
+
+    def test_create_new_question_fail(self):
+        res = self.client().post('/api/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertTrue(data['message'])
+        self.assertTrue(data['error'])
 
     def test_get_question_search_with_results(self):
         res = self.client().post('/api/questions/search', json={'searchTerm': 'title'})
@@ -97,7 +115,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
-        self.assertEqual(len(data['questions']), 2)
+        self.assertTrue(len(data['questions']))
 
     def test_get_question_search_without_results(self):
         res = self.client().post('/api/questions/search', json={'search': ''})
@@ -105,8 +123,8 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertEqual(data['total_questions'], 19)
-        self.assertEqual(len(data['questions']), 10)
+        self.assertTrue(data['total_questions'])
+        self.assertTrue(len(data['questions']))
 
     def test_get_paginated_questions_with_categories(self):
         res = self.client().get('/api/categories/1/questions')
@@ -118,6 +136,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['current_category'])
         self.assertTrue(len(data['questions']))
 
+    def test_get_paginated_questions_with_categories_no_category(self):
+        res = self.client().get('/api/categories/1000/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertTrue(data['message'])
+        self.assertTrue(data['error'])
+
     def test_get_quizzes_search_with_results(self):
         res = self.client().post('/api/quizzes', json={'previous_questions': [1, 2], 'quiz_category': {'id': 3}})
         data = json.loads(res.data)
@@ -126,6 +153,24 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['question'])
         self.assertTrue(data['previousQuestions'])
+
+    def test_get_quizzes_search_with_no_category(self):
+        res = self.client().post('/api/quizzes', json={'previous_questions': [1, 2], 'quiz_category': {'id': 1000}})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
+        self.assertTrue(data['previousQuestions'])
+
+    def test_get_quizzes_search_with_no_results(self):
+        res = self.client().post('/api/quizzes')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+        self.assertTrue(data['message'])
+        self.assertTrue(data['error'])
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
