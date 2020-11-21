@@ -7,7 +7,7 @@ from urllib.request import urlopen
 
 AUTH0_DOMAIN = 'khogaeslam.eu.auth0.com'
 ALGORITHMS = ['HS256']
-API_AUDIENCE = 'dev'
+API_AUDIENCE = 'http://localhost:5000/'
 
 ## AuthError Exception
 '''
