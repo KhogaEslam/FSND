@@ -30,7 +30,7 @@ uncomment the following line to initialize the datbase
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-db_drop_and_create_all()
+# db_drop_and_create_all()
 
 # ------------------------------------- Constants ------------------------------------------------
 
@@ -52,8 +52,8 @@ def get_drinks():
 
     all_drinks = Drink.query.order_by(Drink.id).all()
 
-    if len(all_drinks) == 0:
-        abort(404)
+    # if len(all_drinks) == 0:
+    #     abort(404)
 
     drinks = [drink.short() for drink in all_drinks]
 
@@ -72,12 +72,12 @@ The endpoint
 '''
 @app.route('/api/drinks-detail')
 @requires_auth('get:drinks-detail')
-def get_drink_details():
+def get_drinks_details():
 
     all_drinks = Drink.query.all()
 
-    if len(all_drinks) == 0:
-        abort(404)
+    # if len(all_drinks) == 0:
+    #     abort(404)
 
     drinks = [drink.long() for drink in all_drinks]
 
@@ -97,7 +97,7 @@ The endpoint
 '''
 @app.route('/api/drinks', methods=['POST'])
 @requires_auth('post:drinks')
-def createdrink():
+def create_drink():
 
     body = request.get_json()
     new_title = body.get('title', None)
@@ -105,6 +105,8 @@ def createdrink():
 
     if body is None or new_title is None or new_recipe is None:
         abort(400)
+
+    new_recipe = json.dumps(new_recipe)
 
     drink = Drink(title=new_title, recipe=new_recipe)
     drink.insert()
@@ -146,7 +148,7 @@ def update_drink(drink_id):
         drink.title = new_title
 
     if new_recipe is not None:
-        drink.recipe = new_recipe
+        drink.recipe = json.dumps(new_recipe)
 
     drink.update()
 
@@ -211,7 +213,7 @@ The error handlers using the @app.errorhandler(error) decorator
 
 def print_error(error):
     pass
-    print(sys.exc_info())
+    # print(sys.exc_info())
 
 @app.errorhandler(400)
 def bad_request(error):
