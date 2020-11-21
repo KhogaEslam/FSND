@@ -1,6 +1,6 @@
 # ------------------------------------- Imports ------------------------------------------------
 
-import os
+import os, sys
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -49,21 +49,18 @@ The endpoint
 '''
 @app.route('/api/drinks')
 def get_drinks():
-    try:
-        all_drinks = Drink.query.order_by(Drink.id).all()
 
-        if len(all_drinks) == 0:
-            abort(404)
+    all_drinks = Drink.query.order_by(Drink.id).all()
 
-        drinks = [drink.short() for drink in all_drinks]
+    if len(all_drinks) == 0:
+        abort(404)
 
-        return jsonify({
-            'success': True,
-            'drinks': drinks,
-        }), 200
+    drinks = [drink.short() for drink in all_drinks]
 
-    except Exception:
-        abort(422)
+    return jsonify({
+        'success': True,
+        'drinks': drinks,
+    }), 200
 
 '''
 The endpoint
@@ -76,21 +73,18 @@ The endpoint
 @app.route('/api/drinks-detail')
 @requires_auth('get:drinks-detail')
 def get_drink_details():
-    try:
-        all_drinks = Drink.query.all()
 
-        if len(all_drinks) == 0:
-            abort(404)
+    all_drinks = Drink.query.all()
 
-        drinks = [drink.long() for drink in all_drinks]
+    if len(all_drinks) == 0:
+        abort(404)
 
-        return jsonify({
-            'success': True,
-            'drinks': drinks,
-        }), 200
+    drinks = [drink.long() for drink in all_drinks]
 
-    except Exception:
-        abort(422)
+    return jsonify({
+        'success': True,
+        'drinks': drinks,
+    }), 200
 
 '''
 The endpoint
@@ -109,21 +103,17 @@ def createdrink():
     new_title = body.get('title', None)
     new_recipe = body.get('recipe', None)
 
-    try:
-        if body is None or new_title is None or new_recipe is None:
-            abort(400)
+    if body is None or new_title is None or new_recipe is None:
+        abort(400)
 
-        drink = Drink(title=new_title, recipe=new_recipe)
-        drink.insert()
-        new_drink = [drink.long()]
+    drink = Drink(title=new_title, recipe=new_recipe)
+    drink.insert()
+    new_drink = [drink.long()]
 
-        return jsonify({
-            'success': True,
-            'drinks': new_drink,
-        }), 200
-
-    except Exception:
-        abort(422)
+    return jsonify({
+        'success': True,
+        'drinks': new_drink,
+    }), 200
 
 '''
 The endpoint
@@ -152,24 +142,20 @@ def update_drink(drink_id):
     new_title = body.get('title', None)
     new_recipe = body.get('recipe', None)
 
-    try:
-        if new_title is not None:
-            drink.title = new_title
+    if new_title is not None:
+        drink.title = new_title
 
-        if new_recipe is not None:
-            drink.recipe = new_recipe
+    if new_recipe is not None:
+        drink.recipe = new_recipe
 
-        drink.update()
+    drink.update()
 
-        new_drink = [drink.long()]
+    new_drink = [drink.long()]
 
-        return jsonify({
-            'success': True,
-            'drinks': new_drink,
-        }), 200
-
-    except Exception:
-        abort(422)
+    return jsonify({
+        'success': True,
+        'drinks': new_drink,
+    }), 200
 
 '''
 The endpoint
@@ -184,21 +170,18 @@ The endpoint
 @app.route('/api/drinks/<int:drink_id>', methods=['DELETE'])
 @requires_auth('delete:drinks')
 def delete_drink(drink_id):
-    try:
-        drink = Drink.query.get(drink_id)
 
-        if drink is None:
-            abort(404)
+    drink = Drink.query.get(drink_id)
 
-        drink.delete()
+    if drink is None:
+        abort(404)
 
-        return jsonify({
-            'success': True,
-            'delete': drink_id,
-        }), 200
+    drink.delete()
 
-    except Exception:
-        abort(422)
+    return jsonify({
+        'success': True,
+        'delete': drink_id,
+    }), 200
 
 # --------------------------------------- Error Handlers ----------------------------------------------
 
@@ -226,8 +209,15 @@ The error handlers using the @app.errorhandler(error) decorator
 '''
 # Error Handlers...
 
+def print_error(error):
+    pass
+    print(sys.exc_info())
+
 @app.errorhandler(400)
 def bad_request(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": 400,
@@ -236,6 +226,9 @@ def bad_request(error):
 
 @app.errorhandler(404)
 def not_found(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": 404,
@@ -244,6 +237,9 @@ def not_found(error):
 
 @app.errorhandler(405)
 def method_not_allowed(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": 405,
@@ -252,6 +248,9 @@ def method_not_allowed(error):
 
 @app.errorhandler(422)
 def unprocessable(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": 422,
@@ -260,6 +259,9 @@ def unprocessable(error):
 
 @app.errorhandler(500)
 def internal_server_error(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": 500,
@@ -268,6 +270,9 @@ def internal_server_error(error):
 
 @app.errorhandler(503)
 def service_unavailable(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": 503,
@@ -280,6 +285,9 @@ The error handler for AuthError
 '''
 @app.errorhandler(AuthError)
 def auth_error(error):
+
+    print_error(error)
+
     return jsonify({
         "success": False,
         "error": error.status_code,
